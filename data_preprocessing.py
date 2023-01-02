@@ -3,12 +3,11 @@ import pandas as pd
 from nltk.tokenize import word_tokenize
 from textblob import TextBlob
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from sklearn.model_selection import train_test_split
+from extractword import *
 
-X = pd.read_csv('/Users/noah/desktop/code/2021_ds_project/wine_train.csv', index_col='id')
-X_test_full = pd.read_csv('/Users/noah/desktop/code/2021_ds_project/wine_test.csv', index_col='id')
-
-# training data의 형태는 다음과 같습니다.
-X.head(5)
+X = pd.read_csv('./wine_train.csv', index_col='id')
+X_test_full = pd.read_csv('./wine_test.csv', index_col='id')
 
 # predictor variable과 target variable을 분리합니다.
 X= X.fillna('0')
@@ -27,41 +26,18 @@ X = X.assign(description_length = X['description'].apply(len))
 X_test_full = X_test_full.assign(description_length = X_test_full['description'].apply(len))
 
 # Extract good and bad word
-word_hig = pd.read_csv('/Users/noah/desktop/code/2021_ds_project/word_high.csv')
-word_low = pd.read_csv('/Users/noah/desktop/code/2021_ds_project/word_low.csv')
-
-word_hig = word_hig[['Word_high', 'high/low']]
-word_low = word_low[['Word_low', 'low/high']]
-
-def extract_good_word(df):
-    for i in df.index:
-        desc = df.loc[i, 'description']
-        score = 0
-        for j in word_hig.index:
-            if word_hig.loc[j, 'Word_high'] in desc:
-                score += word_hig.loc[j, 'high/low']
-        df.loc[i, 'desc_good_word'] = score
-
 X = X.assign(desc_good_word=np.nan)
 X_test_full = X_test_full.assign(desc_good_word=np.nan)
-
-extract_good_word(X)
-extract_good_word(X_test_full)
-
-def extract_bad_word(df):
-    for i in df.index:
-        desc = df.loc[i, 'description']
-        score = 0
-        for j in word_low.index:
-            if word_low.loc[j, 'Word_low'] in desc:
-                score += word_low.loc[j, 'low/high']
-        df.loc[i, 'desc_bad_word'] = score
 
 X = X.assign(desc_bad_word=np.nan)
 X_test_full = X_test_full.assign(desc_bad_word=np.nan)
 
+extract_good_word(X)
+extract_good_word(X_test_full)
+
 extract_bad_word(X)
 extract_bad_word(X_test_full)
+
 
 #상위에서 많이 나타나는 키워드 셋입니다. 
 s = set(['impressive','velvety','beautifully','2018','beautiful','opulent','2020','2018','gorgeous','refined','cellar','delicious','powerful','2022','complex',
@@ -111,4 +87,20 @@ X_test_full['neg'] = [analyzer.polarity_scores(v)['neg'] for v in X_test_full['d
 X_test_full['neu'] = [analyzer.polarity_scores(v)['neu'] for v in X_test_full['description']]
 X_test_full['pos'] = [analyzer.polarity_scores(v)['pos'] for v in X_test_full['description']]
 
-print(X.head(5))
+# training data에서 validation set을 나눠줍니다.
+ 
+X_train_full, X_valid_full, y_train, y_valid = train_test_split(X, y, train_size=0.8, test_size=0.2, random_state=0)
+
+#feature column과 categorical column을 구분해줍니다.
+
+feature_columns = ['country', 'description', 'designation', 'price', 'province',
+       'region_1', 'region_2', 'taster_name', 'taster_twitter_handle', 'title',
+       'variety', 'winery', 'year', 'description_length', 'desc_good_word', 'desc_bad_word', 'tb_Pol', 'tb_Subj', 'compound', 'neg', 'neu', 'pos']
+
+X_train = X_train_full[feature_columns].copy()
+X_valid = X_valid_full[feature_columns].copy()
+X_test = X_test_full[feature_columns].copy()
+
+categorical_columns = ['country', 'description', 'designation', 'province',
+       'region_1', 'region_2', 'taster_name', 'taster_twitter_handle', 'title',
+       'variety', 'winery', 'year']
