@@ -1,0 +1,19 @@
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# On branch master
+# Your branch is up to date with 'origin/master'.
+#
+# Changes to be committed:
+#	modified:   .DS_Store
+#	renamed:    data preprocessing.py -> data_preprocessing.py
+#	new file:   extractword.py
+#	new file:   train.py
+#
+# Changes not staged for commit:
+#	modified:   .DS_Store
+#
+# Untracked files:
+#	.swp
+#
